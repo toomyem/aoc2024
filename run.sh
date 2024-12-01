@@ -23,14 +23,14 @@ if [[ ! -d "$root/${day_padded}" ]]
 then
   mkdir "$root/${day_padded}"
   echo -e "(executable\n  (name ${day_padded})\n  (libraries tools base pcre2))" > "$root/${day_padded}/dune"
-  cat <<-EOF > "$root/${day_padded}/${day_padded}.ml"
-    open Base
-    open Tools
+  cat <<EOF > "$root/${day_padded}/${day_padded}.ml"
+open Base
+open Tools
 
-    let () =
-      let lines = read_lines () in
-      let n = List.length lines in
-    Stdlib.Printf.printf "Solution 1: %d\n" n
+let () =
+  let lines = read_lines () in
+  let n = List.length lines in
+Stdlib.Printf.printf "Solution 1: %d\n" n
 EOF
 fi
 
