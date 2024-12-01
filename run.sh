@@ -23,7 +23,15 @@ if [[ ! -d "$root/${day_padded}" ]]
 then
   mkdir "$root/${day_padded}"
   echo -e "(executable\n  (name ${day_padded})\n  (libraries tools base pcre2))" > "$root/${day_padded}/dune"
-  echo -e "let () = Stdlib.Printf.printf \"Solution 1: %s\\\n\" \"Day: $day\"" > "$root/${day_padded}/${day_padded}.ml"
+  cat <<-EOF > "$root/${day_padded}/${day_padded}.ml"
+    open Base
+    open Tools
+
+    let () =
+      let lines = read_lines () in
+      let n = List.length lines in
+    Stdlib.Printf.printf "Solution 1: %d\n" n
+EOF
 fi
 
 [[ -f "$input" ]] || wget -O "$input" --header "Cookie: session=${SESSION:?is not set}" "https://adventofcode.com/2024/day/$day/input"
