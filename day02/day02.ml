@@ -1,11 +1,4 @@
 open Base
-open Tools
-
-let to_int_list (line : string) : int list =
-  Pcre2.extract_all ~full_match:false ~pat:"(\\d+)" line
-  |> Array.map ~f:(fun a -> Int.of_string a.(0))
-  |> Array.to_list
-;;
 
 let remove_at_index index lst =
   let rec remove acc i lst =
@@ -58,7 +51,7 @@ let is_valid (list : int list) =
 ;;
 
 let () =
-  let data = read_lines () |> List.map ~f:to_int_list in
+  let data = Tools.read_lines () |> List.map ~f:Tools.to_int_list in
   let n1 = data |> List.filter ~f:is_strictly_valid |> List.length in
   let n2 = data |> List.filter ~f:is_valid |> List.length in
   Stdlib.Printf.printf "Solution 1: %d\n" n1;
