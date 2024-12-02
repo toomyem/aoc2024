@@ -1,5 +1,4 @@
 open Base
-open Tools
 
 let count el list =
   List.fold ~init:0 ~f:(fun acc x -> if el = x then acc + 1 else acc) list
@@ -7,13 +6,10 @@ let count el list =
 
 let () =
   let data =
-    read_lines ()
-    |> List.fold ~init:([], []) ~f:(fun acc line ->
-      Stdlib.Printf.printf "# %s\n" line;
-      let arr = Pcre2.extract ~full_match:false ~pat:"(\\d+)\\s+(\\d+)" line in
-      let e1 = arr.(0) |> Int.of_string in
-      let e2 = arr.(1) |> Int.of_string in
-      e1 :: fst acc, e2 :: snd acc)
+    Tools.read_lines ()
+    |> List.map ~f:Tools.to_int_list
+    |> List.map ~f:(fun lst -> List.nth_exn lst 0, List.nth_exn lst 1)
+    |> List.unzip
   in
   let sorted1 = List.sort (fst data) ~compare:Int.compare in
   let sorted2 = List.sort (snd data) ~compare:Int.compare in
