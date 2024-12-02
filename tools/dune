@@ -1,2 +1,3 @@
 (library
- (name tools))
+ (name tools)
+ (libraries base stdio pcre2))
