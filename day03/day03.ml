@@ -13,7 +13,6 @@ type state =
 let start_state = { value = 0; enabled = true }
 
 let calc_mul (exp : string) =
-  Stdlib.Printf.printf "%s\n" exp;
   let arr = Pcre2.extract ~full_match:false ~pat:"(\\d+),(\\d+)" exp in
   Int.of_string arr.(0) * Int.of_string arr.(1)
 ;;
