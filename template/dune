@@ -1,4 +1,4 @@
 (executable
-  (public_name day04)
+  (public_name _day_)
   (name main)
   (libraries tools base pcre2))

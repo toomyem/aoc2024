@@ -1,3 +1,4 @@
 (executable
-  (name day03)
+  (public_name day03)
+  (name main)
   (libraries tools base pcre2))
