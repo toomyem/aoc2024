@@ -33,3 +33,5 @@ let rec permute (l : 'a list) : 'a list list =
     let p = permute tl in
     if List.is_empty p then [ [ hd ] ] else p |> List.map ~f:(insert hd) |> List.concat
 ;;
+
+let sum_of_ints lst = List.fold ~init:0 ~f:(fun acc x -> acc + x) lst
