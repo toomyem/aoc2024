@@ -6,45 +6,71 @@ type direction =
   | Left
   | Right
 
-type guard =
+type pos =
   { r : int
   ; c : int
+  }
+
+type guard =
+  { p : pos
   ; d : direction
   }
+
+module PosSet = struct
+  module Pos = struct
+    type t = pos
+
+    let compare (a : pos) (b : pos) =
+      match Int.compare a.r b.r with
+      | 0 -> Int.compare a.c b.c
+      | n -> n
+    ;;
+
+    let sexp_of_t p = Sexp.List [ Int.sexp_of_t p.r; Int.sexp_of_t p.c ]
+  end
+
+  include Pos
+  include Comparator.Make (Pos)
+end
+
+let make_pos r c = { r; c }
 
 let find_guard (board : string list) : guard =
   let r, row = List.findi_exn ~f:(fun _ row -> String.contains row '^') board in
   let c = String.index_exn row '^' in
-  { r; c; d = Up }
+  { p = make_pos r c; d = Up }
 ;;
 
-let empty_set = Set.empty (module String)
-let make_key g = Int.to_string g.r ^ "-" ^ Int.to_string g.c
+let empty_set = Set.empty (module PosSet)
 
-let on_board board g =
+let on_board board (p : pos) =
   let h = List.length board
   and w = String.length (List.hd_exn board) in
-  g.r >= 0 && g.r < h && g.c >= 0 && g.c < w
+  p.r >= 0 && p.r < h && p.c >= 0 && p.c < w
 ;;
 
-let get board (r : int) (c : int) =
-  if on_board board { r; c; d = Up }
+let get board (p : pos) =
+  if on_board board p
   then (
-    let row = List.nth_exn board r in
-    String.get row c)
+    let row = List.nth_exn board p.r in
+    String.get row p.c)
   else '.'
 ;;
 
 let make_move board g =
+  let pos_up = make_pos (g.p.r - 1) g.p.c in
+  let pos_down = make_pos (g.p.r + 1) g.p.c in
+  let pos_left = make_pos g.p.r (g.p.c - 1) in
+  let pos_right = make_pos g.p.r (g.p.c + 1) in
   match g.d with
-  | Up when Char.equal (get board (g.r - 1) g.c) '#' -> { g with d = Right }
-  | Up -> { g with r = g.r - 1 }
-  | Right when Char.equal (get board g.r (g.c + 1)) '#' -> { g with d = Down }
-  | Right -> { g with c = g.c + 1 }
-  | Down when Char.equal (get board (g.r + 1) g.c) '#' -> { g with d = Left }
-  | Down -> { g with r = g.r + 1 }
-  | Left when Char.equal (get board g.r (g.c - 1)) '#' -> { g with d = Up }
-  | Left -> { g with c = g.c - 1 }
+  | Up when Char.equal (get board pos_up) '#' -> { g with d = Right }
+  | Up -> { g with p = pos_up }
+  | Right when Char.equal (get board pos_right) '#' -> { g with d = Down }
+  | Right -> { g with p = pos_right }
+  | Down when Char.equal (get board pos_down) '#' -> { g with d = Left }
+  | Down -> { g with p = pos_down }
+  | Left when Char.equal (get board pos_left) '#' -> { g with d = Up }
+  | Left -> { g with p = pos_left }
 ;;
 
 type result =
@@ -56,8 +82,8 @@ let calc_result board =
   let v = ref empty_set in
   let c = ref 0 in
   let max = 10000 in
-  while on_board board !g && !c < max do
-    v := Set.add !v (make_key !g);
+  while on_board board !g.p && !c < max do
+    v := Set.add !v !g.p;
     g := make_move board !g;
     c := !c + 1
   done;
@@ -73,12 +99,8 @@ let set_obstacle board r c =
         if i = c && not (Char.equal ch '^') then '#' else ch))
 ;;
 
-let check_loop board n p =
-  let r, c =
-    match String.split ~on:'-' p |> List.map ~f:Int.of_string with
-    | r :: c :: _ -> r, c
-    | _ -> failwith "Error"
-  in
+let check_loop board n (p : pos) =
+  let { r; c } = p in
   let board = set_obstacle board r c in
   let result, _ = calc_result board in
   match result with
