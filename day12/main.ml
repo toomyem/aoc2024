@@ -36,26 +36,23 @@ let set_at board pos ch =
   if r >= 0 && r < h && c >= 0 && c < w then board.(r).(c) <- ch
 ;;
 
-let fill board pos =
-  let rec fill0 board pos =
-    let ch = get_at board pos in
-    if Char.equal ch '.'
-    then []
-    else (
-      set_at board pos (Char.lowercase ch);
-      let w =
-        List.map dirs ~f:(fun dir ->
-          let npos = move pos dir in
-          let nch = get_at board npos in
-          if Char.equal ch nch then fill0 board npos else [])
-      in
-      pos :: List.concat w)
-  in
-  fill0 board pos
+let rec fill board pos =
+  let ch = get_at board pos in
+  if not (Char.between ~low:'A' ~high:'Z' ch)
+  then []
+  else (
+    set_at board pos (Char.lowercase ch);
+    let w =
+      List.map dirs ~f:(fun dir ->
+        let npos = move pos dir in
+        let nch = get_at board npos in
+        if Char.equal ch nch then fill board npos else [])
+    in
+    pos :: List.concat w)
 ;;
 
-let fence board area =
-  let z =
+let fence1 board area =
+  let costs =
     List.map
       ~f:(fun pos ->
         let ch = get_at board pos in
@@ -68,23 +65,17 @@ let fence board area =
         4 - Tools.sum_of_ints f)
       area
   in
-  Tools.sum_of_ints z
-;;
-
-let calc_cost board pos =
-  let ch = get_at board pos in
-  if Char.between ~low:'A' ~high:'Z' ch
-  then (
-    let area = fill board pos in
-    List.length area * fence board area)
-  else 0
+  List.length area * Tools.sum_of_ints costs
 ;;
 
 let read_board = Tools.read_lines () |> List.map ~f:String.to_array |> List.to_array
 
 let () =
   let board = read_board in
-  let costs = List.map ~f:(calc_cost board) (coords board) in
-  let n = Tools.sum_of_ints costs in
-  Stdlib.Printf.printf "Solution 1: %d\n" n
+  let areas =
+    List.map ~f:(fill board) (coords board)
+    |> List.filter ~f:(fun a -> not (List.is_empty a))
+  in
+  let n1 = List.map ~f:(fence1 board) areas |> Tools.sum_of_ints in
+  Stdlib.Printf.printf "Solution 1: %d\n" n1
 ;;
