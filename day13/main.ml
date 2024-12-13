@@ -6,9 +6,9 @@ type delta =
   }
 
 type machine =
-  { ba : delta
-  ; bb : delta
-  ; prize : delta
+  { a : delta
+  ; b : delta
+  ; p : delta
   }
 
 type state =
@@ -17,18 +17,11 @@ type state =
   ; machines : machine list
   }
 
-let up_to n = List.range 0 n
-
 let solve machine =
-  let { ba; bb; prize } = machine in
-  List.cartesian_product (up_to 100) (up_to 100)
-  |> List.map ~f:(fun (i, j) ->
-    let xx = (i * ba.x) + (j * bb.x) in
-    let yy = (i * ba.y) + (j * bb.y) in
-    if xx = prize.x && yy = prize.y then (3 * i) + j else -1)
-  |> List.filter ~f:(fun x -> x <> -1)
-  |> List.min_elt ~compare:Int.compare
-  |> Option.value ~default:(-1)
+  let { a; b; p } = machine in
+  let m = ((p.y * a.x) - (p.x * a.y)) / ((b.y * a.x) - (b.x * a.y)) in
+  let n = (p.x - (m * b.x)) / a.x in
+  if (n * a.x) + (m * b.x) = p.x && (n * a.y) + (m * b.y) = p.y then (3 * n) + m else 0
 ;;
 
 let get_delta line =
@@ -45,25 +38,34 @@ let update_state state line =
   else if is_sub "Prize"
   then
     { state with
-      machines = { ba = state.a; bb = state.b; prize = get_delta line } :: state.machines
+      machines = { a = state.a; b = state.b; p = get_delta line } :: state.machines
     }
   else state
 ;;
 
-let read_state =
-  Tools.read_lines ()
-  |> List.fold
-       ~init:{ a = { x = 0; y = 0 }; b = { x = 0; y = 0 }; machines = [] }
-       ~f:update_state
+let read_machines =
+  let state =
+    Tools.read_lines ()
+    |> List.fold
+         ~init:{ a = { x = 0; y = 0 }; b = { x = 0; y = 0 }; machines = [] }
+         ~f:update_state
+  in
+  state.machines
+;;
+
+let add_offset offset machine =
+  { machine with p = { x = machine.p.x + offset; y = machine.p.y + offset } }
 ;;
 
 let () =
-  let state = read_state in
-  let n =
-    state.machines
+  let machines = read_machines in
+  let n1 = machines |> List.map ~f:solve |> Tools.sum_of_ints in
+  let n2 =
+    machines
+    |> List.map ~f:(add_offset 10_000_000_000_000)
     |> List.map ~f:solve
-    |> List.filter ~f:(fun x -> x <> -1)
     |> Tools.sum_of_ints
   in
-  Stdlib.Printf.printf "Solution 1: %d\n" n
+  Stdlib.Printf.printf "Solution 1: %d\n" n1;
+  Stdlib.Printf.printf "Solution 2: %d\n" n2
 ;;
