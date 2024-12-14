@@ -15,7 +15,7 @@ let read_lines () =
 ;;
 
 let to_int_list (line : string) : int list =
-  Pcre2.extract_all ~full_match:false ~pat:"(\\d+)" line
+  Pcre2.extract_all ~full_match:false ~pat:"(-?\\d+)" line
   |> Array.map ~f:(fun a -> Int.of_string a.(0))
   |> Array.to_list
 ;;
