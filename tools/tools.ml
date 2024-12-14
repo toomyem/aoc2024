@@ -14,6 +14,23 @@ let read_lines () =
   read_lines0 []
 ;;
 
+let read_board () = read_lines () |> List.to_array |> Array.map ~f:String.to_array
+let board_dim board = Array.length board.(0), Array.length board
+
+let get_at board pos =
+  let r, c = pos in
+  let w, h = board_dim board in
+  if r >= 0 && r < h && c >= 0 && c < w then board.(r).(c) else '.'
+;;
+
+let set_at board pos ch =
+  let r, c = pos in
+  let w, h = board_dim board in
+  if r >= 0 && r < h && c >= 0 && c < w then board.(r).(c) <- ch
+;;
+
+let update_at board pos ~f = set_at board pos (get_at board pos |> f)
+
 let to_int_list (line : string) : int list =
   Pcre2.extract_all ~full_match:false ~pat:"(-?\\d+)" line
   |> Array.map ~f:(fun a -> Int.of_string a.(0))
