@@ -29,7 +29,20 @@ let set_at board pos ch =
   if r >= 0 && r < h && c >= 0 && c < w then board.(r).(c) <- ch
 ;;
 
+let is_at board pos ch = equal_char (get_at board pos) ch
 let update_at board pos ~f = set_at board pos (get_at board pos |> f)
+
+let find_on_board board ch =
+  let w, h = board_dim board in
+  let coords = List.cartesian_product (List.range 0 h) (List.range 0 w) in
+  List.find ~f:(fun (r, c) -> equal_char board.(r).(c) ch) coords
+;;
+
+let filter_board board ~f =
+  let w, h = board_dim board in
+  let coords = List.cartesian_product (List.range 0 h) (List.range 0 w) in
+  List.filter ~f coords
+;;
 
 let to_int_list (line : string) : int list =
   Pcre2.extract_all ~full_match:false ~pat:"(-?\\d+)" line
