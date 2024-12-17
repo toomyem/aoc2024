@@ -20,9 +20,6 @@ module PosComparator = struct
   include Comparator.Make (Pos)
 end
 
-(* let turn_right dir = (dir + 1) % 4
-let turn_left dir = (dir + 3) % 4 *)
-
 let go dir (r, c) =
   match dir with
   | 0 -> r - 1, c
@@ -32,27 +29,19 @@ let go dir (r, c) =
   | d -> failwith ("Invalid dir " ^ Int.to_string d)
 ;;
 
-let print_board board =
-  let b =
-    Array.fold ~init:"" ~f:(fun acc row -> acc ^ String.of_array row ^ "\n") board
-  in
-  Stdlib.Printf.printf "%s" b;
-  Stdlib.flush Stdio.stdout
-;;
-
 let all = ref []
 
 let update_best best cost path =
   if cost < !best
   then (
     best := cost;
-    Stdlib.Printf.printf "best: %d\n" !best;
+    Stdlib.Printf.printf "Solution 1: %d\n" !best;
     Stdlib.flush Stdio.stdout;
     all := path)
   else if cost = !best
   then (
     all := List.dedup_and_sort (!all @ path) ~compare:Pos.compare;
-    Stdlib.Printf.printf "all: %d\n" (List.length !all);
+    Stdlib.Printf.printf "Solution 2: %d\n" (List.length !all);
     Stdlib.flush Stdio.stdout)
 ;;
 
@@ -116,12 +105,8 @@ let _pp key data =
 let same_pos p1 p2 = Pos.compare p1 p2 = 0
 
 let find_best g start_pos end_pos =
-  (* let s = Map.fold g ~init:"" ~f:(fun ~key ~data acc -> acc ^ _pp key data ^ "\n") in
-  Stdlib.Printf.printf "%s\n" s;
-  Stdlib.flush Stdio.stdout; *)
   let best = ref Int.max_value in
   let rec walk pos dir cost v path =
-    (* Stdlib.Printf.printf "pos:%s dir:%d cost:%d\n" (pos_to_str pos) dir cost; *)
     if same_pos pos end_pos
     then update_best best cost path
     else if Set.mem v pos
@@ -150,9 +135,6 @@ let () =
   let board = read_board () in
   let start_pos = find_on_board board 'S' |> Option.value_exn in
   let end_pos = find_on_board board 'E' |> Option.value_exn in
-  print_board board;
-  (* set_at board start_pos '.';
-  set_at board end_pos '.'; *)
   let graph = build_graph board in
   let n = find_best graph start_pos end_pos in
   Stdlib.Printf.printf "Solution 1: %d\n" n
