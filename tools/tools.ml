@@ -44,11 +44,12 @@ let filter_board board ~f =
   List.filter ~f coords
 ;;
 
-let to_int_list (line : string) : int list =
+let to_int_arr (line : string) : int array =
   Pcre2.extract_all ~full_match:false ~pat:"(-?\\d+)" line
   |> Array.map ~f:(fun a -> Int.of_string a.(0))
-  |> Array.to_list
 ;;
+
+let to_int_list (line : string) : int list = to_int_arr line |> Array.to_list
 
 let rec permute (l : 'a list) : 'a list list =
   let insert a l =
