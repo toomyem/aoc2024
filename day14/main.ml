@@ -52,12 +52,10 @@ let found_tree picture =
   | None -> false
 ;;
 
-let print_picture picture : unit = Stdlib.Printf.printf "%s" (String.concat_lines picture)
-
 let rec search_tree i robots =
   let r = move_all robots in
   let picture = draw_robots r in
-  if found_tree picture then i, picture else search_tree (i + 1) r
+  if found_tree picture then i else search_tree (i + 1) r
 ;;
 
 let () =
@@ -66,8 +64,7 @@ let () =
     Fn.apply_n_times ~n:100 move_all robots |> List.fold ~init:empty ~f:update_quadrants
   in
   let n1 = q.lu * q.ru * q.ld * q.rd in
-  let n2, picture = search_tree 1 robots in
-  print_picture picture;
+  let n2 = search_tree 1 robots in
   Stdlib.Printf.printf "Solution 1: %d\n" n1;
   Stdlib.Printf.printf "Solution 2: %d\n" n2
 ;;
