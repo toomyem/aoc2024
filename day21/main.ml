@@ -13,20 +13,26 @@ let find pad ch =
   |> List.find_exn ~f:(fun (r, c) -> equal_char pad.(r).(c) ch)
 ;;
 
+let move_h d =
+  if d < 0 then String.make (-d) '<' else if d > 0 then String.make d '>' else ""
+;;
+
+let move_v d =
+  if d < 0 then String.make (-d) '^' else if d > 0 then String.make d 'v' else ""
+;;
+
 let paths pad (r1, c1) (r2, c2) =
-  let found = ref [] in
-  let rec walk (r, c) acc =
-    if r = r2 && c = c2
-    then found := acc :: !found
-    else if not (equal_char pad.(r).(c) ' ')
-    then (
-      if c < c2 then walk (r, c + 1) (acc ^ ">");
-      if c > c2 then walk (r, c - 1) (acc ^ "<");
-      if r < r2 then walk (r + 1, c) (acc ^ "v");
-      if r > r2 then walk (r - 1, c) (acc ^ "^"))
-  in
-  walk (r1, c1) "";
-  !found
+  let dr, dc = r2 - r1, c2 - c1 in
+  if dr = 0 && dc = 0
+  then [ "" ]
+  else if dr = 0
+  then [ move_h dc ]
+  else if dc = 0
+  then [ move_v dr ]
+  else (
+    let p = if equal_char pad.(r2).(c1) ' ' then [] else [ move_v dr ^ move_h dc ] in
+    let p = if equal_char pad.(r1).(c2) ' ' then p else (move_h dc ^ move_v dr) :: p in
+    p)
 ;;
 
 (* let pos_to_str pos = "(" ^ Int.to_string (fst pos) ^  "," ^ Int.to_string (snd pos) ^")" *)
@@ -52,31 +58,35 @@ let find_paths pad keys =
 ;;
 
 let decode pads code =
-  let found = ref [] in
   Stdlib.Printf.printf "code: %s\n" code;
   Stdlib.flush Stdio.stdout;
+  let m = ref Int.max_value in
   let rec dec pads keys =
     match pads with
     | pad :: rest -> find_paths pad keys |> List.iter ~f:(fun path -> dec rest path)
-    | [] -> found := keys :: !found
+    | [] ->
+      let n = String.length keys in
+      if n < !m
+      then (
+        Stdlib.Printf.printf "!keys: %d\n" n;
+        Stdlib.flush Stdio.stdout;
+        m := n)
   in
   dec pads code;
-  !found
+  Stdlib.Printf.printf "code: %s %d\n" code !m;
+  Stdlib.flush Stdio.stdout;
+  !m
 ;;
 
 let () =
   let codes = Tools.read_lines () in
   let n =
     List.fold codes ~init:0 ~f:(fun acc code ->
-      let pp = decode [ keypad; dirpad; dirpad ] code in
+      let pp = decode [ keypad; dirpad; dirpad; dirpad ] code in
       (* List.iter pp ~f:(fun p -> Stdlib.Printf.printf "%s\n" p); *)
-      let m =
-        List.map pp ~f:String.length
-        |> List.min_elt ~compare:Int.compare
-        |> Option.value_exn
-      in
       let v = Int.of_string (String.chop_suffix_if_exists ~suffix:"A" code) in
-      acc + (v * m))
+      acc + (v * pp))
   in
   Stdlib.Printf.printf "Solution 1: %d\n" n
 ;;
+(* Stdlib.Printf.printf "%s\n" (find_paths dirpad "v" |> String.concat ~sep:"|") *)
