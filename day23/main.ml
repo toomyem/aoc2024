@@ -11,8 +11,6 @@ let make_graph lines =
 ;;
 
 let find_cycles g n =
-  Stdlib.Printf.printf "%s\n" n;
-  Stdlib.flush Stdio.stdout;
   let cycles = ref [] in
   let rec walk path =
     let exits = Map.find_multi g (List.hd_exn path) in
@@ -32,6 +30,31 @@ let count_cycles g =
   |> List.map ~f:(fun n -> find_cycles g n)
 ;;
 
+let m = ref (Set.empty (module String))
+
+let rec clique g r p x =
+  if Set.is_empty p && Set.is_empty x
+  then (if Set.length r > Set.length !m then m := r)
+  else (
+    let p = ref p in
+    let x = ref x in
+    List.iter (Map.keys g) ~f:(fun v ->
+      if Set.mem !p v
+      then (
+        let sn =
+          List.fold
+            (Map.find_multi g v)
+            ~init:(Set.empty (module String))
+            ~f:(fun s p -> Set.add s p)
+        in
+        let rp = Set.add r v in
+        let pp = Set.inter !p sn in
+        let xp = Set.inter rp pp in
+        clique g rp pp xp;
+        p := Set.remove !p v;
+        x := Set.add !x v)))
+;;
+
 let () =
   let g = Tools.read_lines () |> make_graph in
   let n = count_cycles g |> List.concat in
@@ -42,5 +65,15 @@ let () =
       List.sort c ~compare:String.compare |> String.concat ~sep:"-")
     |> List.dedup_and_sort ~compare:String.compare
   in
-  Stdlib.Printf.printf "Solution 1: %d\n" (List.length x)
+  Stdlib.Printf.printf "Solution 1: %d\n" (List.length x);
+  clique
+    g
+    (Set.empty (module String))
+    (Set.of_list (module String) (Map.keys g))
+    (Set.empty (module String));
+  Stdlib.Printf.printf
+    "Solution 2: %s\n"
+    (Set.fold !m ~init:[] ~f:(fun acc v -> v :: acc)
+     |> List.sort ~compare:String.compare
+     |> String.concat ~sep:",")
 ;;
