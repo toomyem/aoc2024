@@ -35,10 +35,7 @@ let paths pad (r1, c1) (r2, c2) =
     p)
 ;;
 
-let shortest pp =
-  List.min_elt pp ~compare:(fun a b -> String.length a - String.length b)
-  |> Option.value_exn
-;;
+let shortest pp = List.min_elt pp ~compare:Int.compare |> Option.value_exn
 
 let enc pad k p =
   let a = find pad p in
@@ -47,48 +44,38 @@ let enc pad k p =
   List.map pp ~f:(fun s -> s ^ "A")
 ;;
 
-(* List.map pp ~f:(fun p -> p ^ "A") *)
+let int_value code = Int.of_string (String.chop_suffix_if_exists ~suffix:"A" code)
 
-(* let last_char s = String.to_list_rev s |> List.hd_exn *)
-
-let h = Hashtbl.create (module String)
-
-let rec encode (keys : string) lvl m : string =
-  Stdlib.Printf.printf "encode: %s (lvl=%d)\n" keys lvl;
-  Stdlib.flush Stdio.stdout;
-  match Hashtbl.find h (keys ^ Int.to_string lvl) with
-  | Some x -> x
-  | None ->
-    let x =
-      if lvl = m
-      then keys
-      else (
-        let pad = if lvl = 0 then keypad else dirpad in
-        String.fold keys ~init:("", 'A') ~f:(fun (acc, p) k ->
-          let e = enc pad k p in
-          let ee = List.map e ~f:(fun e -> encode e (lvl + 1) m) |> shortest in
-          acc ^ ee, k)
-        |> fst)
-    in
-    Hashtbl.set h ~key:(keys ^ Int.to_string lvl) ~data:x;
-    x
+let solve codes m =
+  let h = Hashtbl.create (module String) in
+  let rec encode (keys : string) lvl m : int =
+    match Hashtbl.find h (keys ^ Int.to_string lvl) with
+    | Some x -> x
+    | None ->
+      let x =
+        if lvl = m
+        then String.length keys
+        else (
+          let pad = if lvl = 0 then keypad else dirpad in
+          String.fold keys ~init:(0, 'A') ~f:(fun (acc, p) k ->
+            let e = enc pad k p in
+            let ee = List.map e ~f:(fun e -> encode e (lvl + 1) m) |> shortest in
+            acc + ee, k)
+          |> fst)
+      in
+      Hashtbl.set h ~key:(keys ^ Int.to_string lvl) ~data:x;
+      x
+  in
+  List.fold codes ~init:0 ~f:(fun acc code ->
+    let n = encode code 0 m in
+    let v = int_value code in
+    acc + (n * v))
 ;;
 
 let () =
   let codes = Tools.read_lines () in
-  let n =
-    List.fold codes ~init:0 ~f:(fun acc code ->
-      let p = encode code 0 21 in
-      let v = Int.of_string (String.chop_suffix_if_exists ~suffix:"A" code) in
-      Stdlib.Printf.printf
-        "%s %s len=%dMB %d\n"
-        code
-        (String.prefix p 80)
-        (String.length p / 1024 / 1024)
-        (v * String.length p);
-      Stdlib.flush Stdio.stdout;
-      acc + (v * String.length p))
-  in
-  Stdlib.Printf.printf "Solution 1: %d\n" n
+  let n1 = solve codes 3 in
+  let n2 = solve codes 26 in
+  Stdlib.Printf.printf "Solution 1: %d\n" n1;
+  Stdlib.Printf.printf "Solution 2: %d\n" n2
 ;;
-(* Stdlib.Printf.printf "%s\n" (find_paths dirpad "v" |> String.concat ~sep:"|") *)
