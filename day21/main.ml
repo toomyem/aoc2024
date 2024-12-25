@@ -57,35 +57,48 @@ let find_paths pad keys =
   !found
 ;;
 
-let decode pads code =
-  Stdlib.Printf.printf "code: %s\n" code;
-  Stdlib.flush Stdio.stdout;
-  let m = ref Int.max_value in
-  let rec dec pads keys =
-    match pads with
-    | pad :: rest -> find_paths pad keys |> List.iter ~f:(fun path -> dec rest path)
-    | [] ->
-      let n = String.length keys in
-      if n < !m
-      then (
-        Stdlib.Printf.printf "!keys: %d\n" n;
-        Stdlib.flush Stdio.stdout;
-        m := n)
-  in
-  dec pads code;
-  Stdlib.Printf.printf "code: %s %d\n" code !m;
-  Stdlib.flush Stdio.stdout;
-  !m
+let shortest pp =
+  List.min_elt pp ~compare:(fun a b -> String.length a - String.length b)
+  |> Option.value_exn
+;;
+
+let enc pad k p =
+  let a = find pad p in
+  let b = find pad k in
+  let pp = paths pad a b in
+  let sp = shortest pp in
+  (* Stdlib.Printf.printf "enc: %c to %c = %s\n" p k (sp ^ "A"); *)
+  sp ^ "A"
+;;
+
+(* let last_char s = String.to_list_rev s |> List.hd_exn *)
+
+let rec encode (keys : string) lvl m : string =
+  (* Stdlib.Printf.printf "encode: %s (%d)\n" keys lvl; *)
+  if lvl = m
+  then keys
+  else (
+    let pad = if lvl = 0 then keypad else dirpad in
+    List.fold (String.to_list keys) ~init:("", 'A') ~f:(fun (acc, p) k ->
+      let e = enc pad k p in
+      let ee = encode e (lvl + 1) m in
+      acc ^ ee, k)
+    |> fst)
 ;;
 
 let () =
   let codes = Tools.read_lines () in
   let n =
     List.fold codes ~init:0 ~f:(fun acc code ->
-      let pp = decode [ keypad; dirpad; dirpad; dirpad ] code in
-      (* List.iter pp ~f:(fun p -> Stdlib.Printf.printf "%s\n" p); *)
+      let pp = encode code 0 3 in
       let v = Int.of_string (String.chop_suffix_if_exists ~suffix:"A" code) in
-      acc + (v * pp))
+      Stdlib.Printf.printf
+        "%s to %s len=%d %d\n"
+        code
+        pp
+        (String.length pp)
+        (v * String.length pp);
+      acc + (v * String.length pp))
   in
   Stdlib.Printf.printf "Solution 1: %d\n" n
 ;;
