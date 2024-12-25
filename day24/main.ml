@@ -8,7 +8,6 @@ type gate =
 
 let build_device lines =
   let update d line =
-    Stdlib.Printf.printf "%s\n" line;
     if String.contains line ':'
     then (
       let arr = Pcre2.extract line ~full_match:false ~pat:"([a-z0-9]+): (\\d+)" in
@@ -28,6 +27,9 @@ let build_device lines =
         | "XOR" -> XOR (arr.(0), arr.(2))
         | _ -> failwith ("Invalid operation: " ^ arr.(1))
       in
+      Stdlib.Printf.printf "%s -> %s\n" arr.(0) arr.(3);
+      Stdlib.Printf.printf "%s -> %s\n" arr.(2) arr.(3);
+      Stdlib.Printf.printf "%s [label=\"%s\n%s\"]\n" arr.(3) arr.(1) arr.(3);
       Map.set d ~key:arr.(3) ~data:gate)
     else d
   in
@@ -45,6 +47,9 @@ let rec calc d g =
 
 let () =
   let d = Tools.read_lines () |> build_device in
+  for i = 0 to 45 do
+    Stdlib.Printf.printf "subgraph cluster_%d {x%02d; y%02d; z%02d}\n" i i i i
+  done;
   let zz =
     Map.keys d
     |> List.filter ~f:(fun g -> String.is_prefix g ~prefix:"z")
